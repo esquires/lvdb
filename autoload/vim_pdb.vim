@@ -1,56 +1,6 @@
-"PURPOSE:
-"
-"   integrates pdb (python debugger) into vim
-"
-"BACKGROUND:
-"
-"   pdb is a text-based debugger. Although it can give code context with the
-"   "list" command, it would be helpful to have VIM highlight where you are in
-"   the code. Tabify incorporates the following functionality when debugging
-"   with pdb
-"
-"       1) Update cursor line in vim to match where pdb is in the debugging
-"          process
-"       2) Highlight/delete breakpoints that have been set on the fly in pdb
-"
-"USAGE:
-"
-"   setup
-"
-"       1) in bash, type
-"
-"           python -u scriptname.py | tee .debug
-"
-"          the -u tells python to keep unloading its buffer (i.e., keep
-"          printing its output). piping to tee keeps stdout as well as sending
-"          output to .debug (note: this will create a ".debug" file. You can't
-"          change this without altering the code)
-"
-"       2) in vim, type
-"
-"           :call vim_pdb#Python_debug(1 or 0)
-"
-"          This tells Vim to look for changes in a ".debug" file that will be
-"          (note: there is a mapping <leader>d and <leader>D to automate this
-"          function call)
-"
-"   using the debugger:
-"
-"       1) Stepping: use pdb like normal in bash (e.g., using s, n, c, r,
-"          etc). Vim will automatically follow the pdb output
-"
-"       2) Breakpoints: to set/remove breakpoints, type into bash "b
-"          linenumber" to set a breakpoint and "cl linenumber" to remove a
-"          breakpoint (this also works for "b fname:linenumber"). Vim will
-"          automatically detect the breakpoint changes.
-"
-"          (note: in pdb, "cl" without a linenumber allows the user to clear
-"          all breakpoints at once, but this is not integrated into this
-"          script)
-
-function! vim_pdb#Python_debug(remove_dot_debug)
+function! vim_pdb#Python_debug()
 "toggles debug mode on and off, doing the following
-"   1) global (g:python_debug_mode) variable indicating whether debug mode is on
+"   1) global (g:vim_pdb_debug_mode) variable indicating whether debug mode is on
 "   2) sets an autocommand group to launch "Debug_monitor" function every 0.1 sec
 "   3) deletes the file ".debug" (toggling on or off)
 
@@ -59,12 +9,14 @@ function! vim_pdb#Python_debug(remove_dot_debug)
         finish
     endif
 
-    if g:python_debug_mode == 0
-        "debug mode was previously off, so turn it on
+    "start with clean files
+    call vim_pdb#Delete_file(".debug_location")
+    call vim_pdb#Delete_file(".debug_breakpoint")
 
-        "1) toggle the global debug_mode variable
-        let g:python_debug_mode = 1
-        let g:python_debug_lines = 0
+    if g:vim_pdb_debug_mode == g:vim_pdb_debug_off
+
+        "1) debug mode was previously off, so turn it on
+        let g:vim_pdb_debug_mode = g:vim_pdb_debug_on
 
         "2) set autocommand group to launch "Debug_monitor"
         augroup python_debug
@@ -72,49 +24,53 @@ function! vim_pdb#Python_debug(remove_dot_debug)
             autocmd CursorHold * :call vim_pdb#Debug_monitor()
         augroup END
 
-        set updatetime=100      "do it every 0.1 seconds
+        set updatetime=10      "do it every 0.01 seconds
 
-        "3) delete the file ".debug"
-        if a:remove_dot_debug
-            call vim_pdb#Delete_file(".debug")
-            call pos#Set_current_pos()
-            tabdo call vim_pdb#Remove_highlighting(getmatches(), 'all')
-            call pos#Return_to_orig_pos()
-        endif
+        "3) clear old highlighting (make sure to keep pdb_set_trace)
+        call pos#Set_current_pos()
+        tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"
+        call pos#Return_to_orig_pos()
 
-        "other stuff: put the cursor in the first column/send message
+        "4) Update variables that keep track of file modification times
+        let g:prev_time_debug_location = 0
+        let g:prev_time_debug_breakpoint = 0
+        let g:vim_pdb_has_breakpoints = 0
+
+        "5) let the user know it has started
         execute "normal! 0"
         echo 'Python debug is turned on'
 
-        "g:prev_time is a global variable in vim representing the last time ".debug"
-        let g:prev_time = 0
+    elseif g:vim_pdb_debug_mode == g:vim_pdb_debug_on
 
-    else
+        "1) turn off debug mode
+        let g:vim_pdb_debug_mode = g:vim_pdb_debug_off
 
-        "1) toggle the global debug_mode variable
-        let g:python_debug_mode = 0
-        let g:python_debug_lines = 0
-
-        "2) set autocommand group to launch "Debug_monitor"
+        "2) turn off autocommand that triggers debug mode
         augroup python_debug
             autocmd!
         augroup END
 
         set updatetime=4000     "back to default time
 
-        "3) delete the file ".debug"
-        if a:remove_dot_debug
-            call vim_pdb#Delete_file(".debug")
-        endif
-
-        "other stuff: remove the cursor line from every tab
+        "3) clear old highlighting
         call pos#Set_current_pos()
         tabdo set nocursorline
+        tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"
         call pos#Return_to_orig_pos()
         redraw
+
+        "4) tell the user it has stopped
         echo 'Python debug is turned off'
 
+        "5) remove necessary globals
+        unlet g:prev_time_debug_location
+        unlet g:prev_time_debug_breakpoint
+        unlet g:vim_pdb_has_breakpoints
+
     endif
+
+    "in case the user has updated their line number toggle settings, update it
+    :call lines#ProcessAugroupSettings()
 
 endfunction
 
@@ -136,57 +92,23 @@ EOF
 endfunction
 
 function! vim_pdb#Debug_monitor()
-" purpose: reads .debug file in current directory and
-"   1) Puts the cursor at the same line as the pdb debugger
-"   2) updates/deletes brakepoints
+"PURPOSE: reads .debug file in current directory and
 "
-" usage:
-"   1) The function is called by the OnCursorHold event
-"      (note the use of feedkeys below to make sure the event occurs every few
-"      seconds)
-"      see function vim_pdb#Delete_file
-"   2) in bash, type python -u scriptname.py | tee .debug
+"   1) Puts the cursor at the same line as the pdb debugger
+"   2) updates/deletes breakpoints
+"
+"USAGE:
+"
+"   The function is called by the OnCursorHold event
+"   (note the use of feedkeys below to make sure the event occurs routinely)
 
-"set cursor to first column to make sure the OnCursorHold event is reset (so
-"this function can be called again after "updatetime" seconds)
-call feedkeys("0")
+call feedkeys("hl")
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " start of python code
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 python << EOF
 import os, time, re, vim
-
-def find_debug_line(lines):
-    '''given lines from .debug, returns the filename and line of the current pdb line
-    if no relevant lines are found, returns empty strings
-
-    arguments: lines (a list of strings) represents the unprocessed lines of debug
-               unprocessed lines are added lines since the last processing of .debug
-
-    algorithm:  loop through each line in reverse.
-                the first line giving a line number will be parsed and the results
-                returned
-    '''
-
-    #reverse the lines so it is looking for the most recent entry
-    lines = lines[::-1]
-
-    #loop through the lines
-    for idx, ln in enumerate(lines):
-
-        #the pdb format for the current line number is one of two things
-        if ln[0] == '>' or ln[0:7] == '(Pdb) >':
-
-            #pull out the path and line number
-            #example line: > /home/eric/.vim/bundle/tabify/autoload/stuff.py(5)<module>()
-            m = re.search(r"(/.*)\((\d+)\)", ln)
-            full_path   = m.group(1)        #e.g., full_path = /home/eric/.vim/bundle/tabify/autoload/stuff.py
-            line_num    = m.group(2)        #e.g., line_num  = 5
-            return full_path, line_num
-
-    #if nothing has been found, return empty strings
-    return "", ""
 
 def go_to_debug_line(full_path, line_num):
     '''updates the cursor position in vim using the results from find_debug_line
@@ -195,184 +117,155 @@ def go_to_debug_line(full_path, line_num):
                line_num (string) - the line number of interest
     '''
 
-    #found is 1 when there is an open tab matching the full path
-    found = vim.eval("tags#Look_for_matching_tab('" + full_path + "')")
+    try:
+        #an error can occur when user decides not to open a tab
 
-    #if found == 0 (the tab is not currently open), open a new tab
-    #note that Look_for_matching_tab opens the tab for you in this case
-    if found == '0':
-        vim.command("tabnew " + full_path)
+        #found is 1 when there is an open tab matching the full path
+        found = vim.eval("tags#Look_for_matching_tab('" + full_path + "')")
 
-    #go to the appropriate line
-    vim.command('execute "normal! ' + line_num + 'G"')
+        #if found == 0 (the tab is not currently open), open a new tab
+        #note that Look_for_matching_tab opens the tab for you in this case
+        if found == '0':
+            vim.command("tabnew " + full_path)
 
-    #turn on the cursor line
-    vim.command("set cursorline")
+        #go to the appropriate line
+        vim.command('execute "normal! ' + line_num + 'G"')
 
-    #for some reason, the filetype is not recognized automatically
-    vim.command("set filetype=python")
+        #turn on the cursor line
+        vim.command("set cursorline")
 
-def process_breakpoint_line(ln):
-    #example pdb output:
-    #(Pdb) Breakpoint 1 at /home/eric/.vim/bundle/tabify/autoload/temp.py:2
-    m = re.search("(\d+) at (.+):(\d+)", ln)
-    break_num = m.group(1)      #e.g., break_num = 1
-    full_path = m.group(2)      #e.g., full_path = /home/eric/.vim/bundle/tabify/autoload/temp.py
-    line_num  = m.group(3)      #e.g., line_num  = 2
-    return break_num, full_path, line_num
+        try:
+            vim.command("foldopen")
+        except:
+            #ignore the error that occurs when there is no fold
+            pass
 
-def process_breakpoints(new_lines, all_lines):
-    '''toggles highlighting on lines representing breakpoints in pdb
+        #for some reason, the filetype is not recognized automatically
+        vim.command("set filetype=python")
+    except:
+        os.remove(".debug_location")
 
-    arguments: new_lines (list of strings) - unprocessed lines in .debug
-               all_lines (list of strings) - all lines in .debug
 
-    algorithm: loop through new_lines
-               if a breakpoint has been added, highlight that line
-               if a breakpoint has been deleted, remove the highlightin
-    '''
-    #loop through all the new lines of pdb
-    for ln in new_lines:
+def process_location_file():
 
-        if ln[0] != '\n':
-
-            #if a breakpoint has been added, then update the highlighting
-            if ln[0:10] == 'Breakpoint' or ln[0:16] == '(Pdb) Breakpoint':
-
-                break_num, full_path, line_num = process_breakpoint_line(ln)
-
-                #check whether the file has been opened
-                found = vim.eval("tags#Look_for_matching_tab('" + full_path + "')")
-
-                #if the file has not been opened, open it
-                if found == '0':
-                    vim.command("tabnew " + full_path)
-
-                #highlight the line
-                vim.command('call matchadd("pdb_breakpoint", "\\\%' + line_num + 'l")')
-
-            #if a breakpoint has been deleted, then remove the highlighting
-            elif ln[0:18] == 'Deleted breakpoint' or ln[0:24] == '(Pdb) Deleted breakpoint':
-
-                #example pdb output:
-                #(Pdb) Deleted breakpoint 1
-                m = re.search("\d+", ln)
-                break_num = m.group(0)      #e.g., break_num = 1
-
-                #loop through all the lines, looking for that breakpoint (to get the line num/path)
-                for ln2 in all_lines:
-
-                    #found the breakpoint, get parameters
-                    if ln2[0:10] == 'Breakpoint' or ln2[0:16] == '(Pdb) Breakpoint':
-                        temp_break_num, temp_full_path, temp_line_num = process_breakpoint_line(ln2)
-
-                        if temp_break_num == break_num:
-                            break
-
-                #open the breakpoint file (if it not already open, open it in a new tab)
-                found = vim.eval("tags#Look_for_matching_tab('" + temp_full_path + "')")
-
-                if found == '0':
-                    vim.command("tabnew " + temp_full_path)
-
-                #remove the highlighting
-                m = vim.eval("getmatches()")
-                if m != '[]':
-                    vim.command("call python_debug#Remove_highlighting(getmatches(), '\%" + temp_line_num + "l')")
-
-def main():
-    '''parses .debug, updating cursor position and adding/removing highlighting'''
+    fname = '.debug_location'
+    prev_time = float(vim.eval("g:prev_time_debug_location"))  #the last time the file was updated by pdb
 
     ############################################################
-    # initialization
-    #############################################################
-    pdb_output_file = '.debug'                  #file that receives output from pdb
-    prev_time = float(vim.eval("g:prev_time"))  #the last time the file was updated by pdb
-    orig_pos = vim.eval("getpos('.')")          #the current position of the cursor in vim
-    orig_tab = vim.eval("tabpagenr()")          #the current tab in vim
-
-    ############################################################
-    # do file checking: whether .debug exists/has been updated
+    # check for whether to update the location based on whether the location file is updated
     #############################################################
 
     #does the .debug file exist?
-    if not os.path.isfile(pdb_output_file):
+    if not os.path.isfile(fname):
         return
 
     #has the .debug file been edited within the last 0.01 seconds?
-    if abs(os.path.getmtime(pdb_output_file) - prev_time) < 0.01:
+    if abs(os.path.getmtime(fname) - prev_time) < 0.01:
         return
 
-    ############################################################
-    # read the file/process global variables
-    #############################################################
+    orig_pos = vim.eval("getpos('.')")          #the current position of the cursor in vim
+    orig_tab = vim.eval("tabpagenr()")          #the current tab in vim
+
     #open the .debug file, put it into lines (last line first)
-    with open('.debug') as f:
-        all_lines = f.read().splitlines()
+    #the file will only have 2 lines:
+    #   line 1: the full path name      e.g.    /home/me/junk.py
+    #   line 2: the line number                 1
+    with open('.debug_location') as f:
+        lines = f.read().splitlines()
 
-    #just look at the added lines
-    prev_ending_line = int(vim.eval("g:python_debug_lines"))
-    new_lines = all_lines[max(0,prev_ending_line-1):]
+    #record last modification time so this code is not called too much (see
+    #above)
+    vim.command('let g:prev_time_debug_location = ' + str(os.path.getmtime(fname)))
 
-    #set global variables: prev time of .debug, number of lines in files
-    vim.command('let g:prev_time = ' + str(os.path.getmtime(pdb_output_file)))
-    vim.command('let g:python_debug_lines = ' + str(len(all_lines)))
+    full_path = lines[0]
+    line_num  = lines[1]
 
-    ############################################################
-    # process the new lines
-    #############################################################
+    if full_path != "":
+        go_to_debug_line(full_path, line_num)           #go to that place
+    else:
+        #otherwise go to the original location
+        vim.command("execute 'tabnext ' " + orig_tab)
+        vim.command("call setpos('.', " + str(orig_pos) + ")")
 
-    #find where the debugger is and go to it
-    if new_lines and new_lines[0] != '\n':
+def process_breakpoint_file():
 
-        #turn on/off breakpoints
-        process_breakpoints(new_lines, all_lines)
+    fname = '.debug_breakpoint'
+    prev_time = float(vim.eval("g:prev_time_debug_breakpoint"))  #the last time the file was updated by pdb
 
-        #put the cursor line in the same spot as the debugger
-        full_path, line_num = find_debug_line(new_lines)    #find where the debugger is
-        if full_path != "":
-            go_to_debug_line(full_path, line_num)           #go to that place
-        else:
-            #otherwise go to the original location
-            vim.command("execute 'tabnext ' " + orig_tab)
-            vim.command("call setpos('.', " + str(orig_pos) + ")")
+    #does the .debug file exist?
+    if not os.path.isfile(fname):
+
+        #only clear breakpoints if there is a match in the active file
+        matches = vim.eval('getmatches()')
+
+        for m in matches:
+            if m['group'] == 'pdb_breakpoint':
+
+                vim.command('call pos#Set_current_pos()')
+                vim.command('tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"')
+                vim.command('call pos#Return_to_orig_pos()')
+                break
+
+        return
+
+    #has the .debug file been edited within the last 0.01 seconds?
+    if abs(os.path.getmtime(fname) - prev_time) < 0.01:
+        return
+
+    #clear old highlighting (keeping the set_trace highlighting)
+    vim.command('call pos#Set_current_pos()')
+    vim.command('tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"')
+    vim.command('call pos#Return_to_orig_pos()')
+
+    #open the .debug file, put it into lines (last line first)
+    with open(fname) as f:
+        lines = f.read().splitlines()
+
+    print lines
+    if lines:
+        vim.command('let g:vim_pdb_has_breakpoints = 1')
+    else:
+        vim.command('let g:vim_pdb_has_breakpoints = 0')
+
+    vim.command('let g:prev_time_debug_breakpoint = ' + str(os.path.getmtime(fname)))
+
+    #the lines are structured as follows:
+    #   1) file name_with_full_path                 e.g,    /home/me/junk.py
+    #   2) list of_line_numbers_with_breakpoints            [1,2]
+    #and this pattern repeats. Thus, if there are 4 files, the
+    #.debug_breakpoint file will have 8 lines
+    for i in range(len(lines)/2):
+
+        full_path = lines[2*i]
+
+        #check whether the file has been opened
+        found = vim.eval("tags#Look_for_matching_tab('" + full_path + "')")
+
+        #if the file has not been opened, open it
+        if found == '0':
+            vim.command("tabnew " + full_path)
+
+        #convert lines to a list
+        line_nums = lines[2*i+1][1:-1]
+        line_nums = line_nums.split(",")
+
+        for line_num in line_nums:
+
+            #highlight the line
+            s = 'call matchaddpos("pdb_breakpoint", [' + line_num + '])'
+            vim.command(s)
+
+def main():
+
+    '''parses .debug, updating cursor position and adding/removing highlighting'''
+
+    process_breakpoint_file()
+    process_location_file()
 
 main()
 EOF
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " end of python code
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-endfunction
-
-function! vim_pdb#Remove_highlighting(hl_list, excl_line_pattern)
-"removes line highlighting
-"
-"arguments: hl_list - a list of dictionaries (the output of getmatches())
-"           excl_line_pattern - either 'all' or a pattern
-"               if all, then remove all line highlighting
-"               otherwise, excl_line_pattern will have the form '\%6l
-
-    "loop through every entry in hl_list
-    let idx = 0
-    while idx < len(a:hl_list)
-
-        "each entry in hl_list is a dictionary, pull out relevant parameters
-        let dict    = a:hl_list[idx]
-        let group   = dict['group']
-        let pattern = dict['pattern']
-        let id      = dict['id']
-
-        "if the group number matches the format used to create the "highlighting
-        "and the excl_line_pattern matches, then delete this hl_list entry
-        if group ==# 'pdb_breakpoint' && (a:excl_line_pattern ==# pattern || a:excl_line_pattern ==# 'all')
-
-            call matchdelete(id)
-
-        endif
-
-        let idx += 1
-
-    endwhile
 
 endfunction
