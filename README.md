@@ -68,21 +68,27 @@ Alter ipdb slightly:
 Mappings/Settings
 ----------
 
-<localleader>d  starts the vim debugging monitor
-                can also be called with ":call vim_pdb#Python_debug()"
+To start the vim debugging monitor (can also be called with ":call vim_pdb#Python_debug()")
 
-<localleader>n  toggles absolute and relative line numbers
-                can also be called with ":call vim_pdb#ToggleNumber()"
+    <localleader>d
+    or
+    :call vim_pdb#Python_debug()
+
+To toggle absolute and relative line numbers
+
+    <localleader>n
+    or
+    :call vim_pdb#ToggleNumber()
 
 If you don't have a local leader set, put the following in your .vimrc
 
     let maplocalleader = "\\"
 
-vim_pdb will also toggle line numbers if you desire (see :h rnu and :h nu)
-for details. When debugging (setting breakpoints, etc) to see absolute
-line numbers but when moving around in Vim, it is nice to have relative
-numbering (to do things like "4j" to move down 4 lines). To toggle this
-setting, set the following in vimrc:
+vim_pdb will also toggle line numbers automatically if you desire (see :h rnu
+and :h nu for details). When debugging (setting breakpoints, etc) to see
+absolute line numbers but when moving around in Vim, it is nice to have
+relative numbering (to do things like "4j" to move down 4 lines). To toggle
+this setting, set the following in vimrc:
 
     let g:vim_pdb_toggle_lines = 0
 
@@ -134,7 +140,7 @@ http://pyclewn.sourceforge.net/
 Sample Workflow
 ------------------
 
-a)  Put the following 2 files in some directory <dir>:
+a)  Put the following 2 files in some directory called \<dir\>:
 
     -------------------------       |       -------------------------
     <dir>/temp.py                   |       <dir>/temp2.py
@@ -169,7 +175,7 @@ c) In vim, type "\d" to start the debug monitor
    (assuming you have set <localleader> to "\" as suggested in the
    settings/mappings section. You can set it to whatever you want though)
 
-d) In the system shell (e.g., bash), cd into <dir> and type
+d) In the system shell (e.g., bash), cd into \<dir\> and type
 
         python temp.py
 
@@ -195,18 +201,18 @@ e) To set a breakpoint (the commands below are native to pdb), from the
 
         cl
 
-    to clear the breakpoint. and
+   to clear the breakpoint. and
 
         s
 
-    to step again. You should see the breakpoint cleared in Vim. In
-    addition to the above commands, all the niceties of IPython and ipdb
-    are available from the shell, including object inspection, tab
-    completion, etc.
+   to step again. You should see the breakpoint cleared in Vim. In
+   addition to the above commands, all the niceties of IPython and ipdb
+   are available from the shell, including object inspection, tab
+   completion, etc.
 
 f)  In Vim, type "\d" to end the debug monitor
 
 License
 ----------
 
-        see LICENSE in the root directory
+see LICENSE in the root directory

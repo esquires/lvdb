@@ -1,10 +1,6 @@
 "syntax is necessary for breakpoint highlighting code
 syntax on
 
-"mappings
-nnoremap <localleader>d :call vim_pdb#Python_debug()<cr>
-nnoremap <leader>n :call line_numbers#ToggleNumber()<cr>
-
 "define global constants
 let g:vim_pdb_toggle_never      = 0
 let g:vim_pdb_toggle_debug      = 1
