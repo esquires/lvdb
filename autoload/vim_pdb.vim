@@ -131,6 +131,10 @@ def go_to_debug_line(full_path, line_num):
         #go to the appropriate line
         vim.command('execute "normal! ' + line_num + 'G"')
 
+        #if the cursor is at the bottom of the line, execute zz to center it
+        if vim.eval("winheight(0)") == vim.eval("winline()"):
+            vim.command('execute "normal! zz"')
+
         #turn on the cursor line
         vim.command("set cursorline")
 
@@ -142,6 +146,7 @@ def go_to_debug_line(full_path, line_num):
 
         #for some reason, the filetype is not recognized automatically
         vim.command("set filetype=python")
+
     except:
         os.remove(".debug_location")
 
