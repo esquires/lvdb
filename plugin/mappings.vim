@@ -10,6 +10,10 @@ let g:vim_pdb_toggle_always_all = 3
 let g:vim_pdb_debug_off         = 0
 let g:vim_pdb_debug_on          = 1
 
+"start/stop debugger, toggle lines
+nnoremap <localleader>d :call vim_pdb#Python_debug()<cr>
+nnoremap <leader>n :call line_numbers#ToggleNumber()<cr>
+
 "default to not in debug mode
 let g:vim_pdb_debug_mode        = g:vim_pdb_debug_off
 
