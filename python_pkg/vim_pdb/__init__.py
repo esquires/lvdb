@@ -89,29 +89,30 @@ class VimPdb(Pdb, object):
 
                 else:
 
-                    for i in range(len(lines)/2):
+                    if len(lines) % 2 == 0:
+                        for i in range(int(len(lines)/2)):
 
-                        #get the key (pathname)
-                        k     = lines[2*i]
+                            #get the key (pathname)
+                            k     = lines[2*i]
 
-                        #get the associated list of breakpoints
-                        lnums = lines[2*i+1][1:-1].split(',')
-                        lnums = [int(l) for l in lnums]
+                            #get the associated list of breakpoints
+                            lnums = lines[2*i+1][1:-1].split(',')
+                            lnums = [int(l) for l in lnums]
 
-                        #case 3: files listed in .debug_breakpoint are not
-                        #found in self.breaks
-                        if not k in self.breaks:
-                            bps_changed = True
-                        else:
+                            #case 3: files listed in .debug_breakpoint are not
+                            #found in self.breaks
+                            if not k in self.breaks:
+                                bps_changed = True
+                            else:
 
-                            #case 4: breakpoints are not consistent within the
-                            #file
-                            bps_changed = ( str(lnums) != str(self.breaks[k]) )
+                                #case 4: breakpoints are not consistent within the
+                                #file
+                                bps_changed = ( str(lnums) != str(self.breaks[k]) )
 
-                        if bps_changed:
-                            #if any breakpoints have changed, there is no need
-                            #to look further
-                            break
+                            if bps_changed:
+                                #if any breakpoints have changed, there is no need
+                                #to look further
+                                break
 
             #update the output file if necessary
             if bps_changed:
