@@ -12,11 +12,11 @@ let g:vim_pdb_debug_on          = 1
 
 "start/stop debugger, toggle lines
 nnoremap <localleader>d :call vim_pdb#Python_debug()<cr>
-nnoremap <leader>n :call line_numbers#ToggleNumber()<cr>
+nnoremap <leader>n :call lines#ToggleNumber()<cr>
 
 "default to not in debug mode
 let g:vim_pdb_debug_mode        = g:vim_pdb_debug_off
 
 "setup whether the user wants to have line numbers toggle
 "(will be updated on vim_pdb#Python_debug() )
-:call lines#ProcessAugroupSettings()
+call lines#ProcessAugroupSettings()

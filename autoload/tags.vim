@@ -16,6 +16,8 @@ function! tags#Look_for_matching_tab(fname)
     while tabpagenr() != tab_num
 
         " if the tab name is equal to the input fname
+        echo a:fname
+        echo expand('%:p')
         if a:fname ==# expand('%:p')
             "return that it has been found
             return 1

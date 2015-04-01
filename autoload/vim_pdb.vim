@@ -28,7 +28,9 @@ function! vim_pdb#Python_debug()
 
         "3) clear old highlighting (make sure to keep pdb_set_trace)
         call pos#Set_current_pos()
-        tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"
+        if hlexists('pdb_set_trace')
+            tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"
+        endif 
         call pos#Return_to_orig_pos()
 
         "4) Update variables that keep track of file modification times
@@ -55,7 +57,9 @@ function! vim_pdb#Python_debug()
         "3) clear old highlighting
         call pos#Set_current_pos()
         tabdo set nocursorline
-        tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"
+        if hlexists('pdb_set_trace')
+            tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"
+        endif 
         call pos#Return_to_orig_pos()
         redraw
 
@@ -145,7 +149,7 @@ def go_to_debug_line(full_path, line_num):
             pass
 
         #for some reason, the filetype is not recognized automatically
-        vim.command("set filetype=python")
+        vim.command("set filetype=cpp")
 
     except:
         os.remove(".debug_location")
@@ -182,6 +186,9 @@ def process_location_file():
     #above)
     vim.command('let g:prev_time_debug_location = ' + str(os.path.getmtime(fname)))
 
+    if len(lines) != 2:
+        return
+
     full_path = lines[0]
     line_num  = lines[1]
 
@@ -207,7 +214,8 @@ def process_breakpoint_file():
             if m['group'] == 'pdb_breakpoint':
 
                 vim.command('call pos#Set_current_pos()')
-                vim.command('tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"')
+                if vim.eval("hlexists('pdb_breakpoint')") == '1':
+                    vim.command('tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"')
                 vim.command('call pos#Return_to_orig_pos()')
                 break
 
@@ -219,14 +227,14 @@ def process_breakpoint_file():
 
     #clear old highlighting (keeping the set_trace highlighting)
     vim.command('call pos#Set_current_pos()')
-    vim.command('tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"')
+    if vim.eval("hlexists('pdb_set_trace')") == 1:
+        vim.command('tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"')
     vim.command('call pos#Return_to_orig_pos()')
 
     #open the .debug file, put it into lines (last line first)
     with open(fname) as f:
         lines = f.read().splitlines()
 
-    print lines
     if lines:
         vim.command('let g:vim_pdb_has_breakpoints = 1')
     else:

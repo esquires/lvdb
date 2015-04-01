@@ -1,7 +1,7 @@
 vim-pdb
 ===
 
-Links Vim to ipdb for lightweight but powerful debugging
+Links Vim to ipdb and gdb for lightweight but powerful debugging.
 
 Installation
 ------------
@@ -110,17 +110,17 @@ this setting, set the following in vimrc:
 Background
 ----------
 
-ipdb is a text-based debugger. Although it can give code context with the
-"list" command, it would be helpful to have VIM highlight where you are in
+ipdb and gdb are text-based debuggers. Although they can give code context with
+the "list" command, it would be helpful to have vim highlight where you are in
 the code. vim-pdb incorporates this functionality. Specifically, it
 
     1) updates the cursor line in vim to match where pdb is in the
        debugging process
     2) Highlights/deletes breakpoints that have been set on the fly in
-       pdb. It also highlights pdb.set_trace() lines.
+       pdb. It also highlights pdb.set_trace() lines when using ipdb.
 
 The vim-pdb debugger has been designed to be simple and lightweight but
-give full access to IPython and ipdb. It does this as follows:
+give full access to ipdb and gdb. For ipdb, it does this as follows:
 
     1) The python installation (see steps c and d in
        |vim_pdb_installation|) makes sure 2 files are created when ipdb is
@@ -134,10 +134,14 @@ give full access to IPython and ipdb. It does this as follows:
        .debug_breakpoint, Vim sets highlighting so the user can know where
        the breakpoint is located.
 
+For gdb, it does this by having an external script monitor (see gdb\_monitor.py
+in the python\_pkg folder) that also updates .debug\_breakpoint and
+.debug\_location.
+
 For a more advanced Vim-based python debugger, see Pyclewn:
 http://pyclewn.sourceforge.net/
 
-Sample Workflow
+Sample Workflow (python debugging)
 ------------------
 
 a)  Put the following 2 files in some directory called \<dir\>:
@@ -209,6 +213,81 @@ e) To set a breakpoint (the commands below are native to pdb), from the
    addition to the above commands, all the niceties of IPython and ipdb
    are available from the shell, including object inspection, tab
    completion, etc.
+
+f)  In Vim, type "\d" to end the debug monitor
+
+Sample Workflow (gdb debugging)
+------------------
+
+a)  Put the following 2 files in some directory called \<dir\>:
+
+    -------------------------       |       -------------------------
+    <dir>/temp.c                    |       <dir>/temp2.c
+    -------------------------       |       -------------------------
+                                    |
+    int main() {                    |       #include <stdio.h>
+                                    |       
+        int a;                      |       int hello_world() {
+        int b;                      |           printf("hello world\n");
+        int c;                      |       }
+                                    |
+        a = 1;                      |
+        b = a + 5;                  |
+        c = a + b;                  |
+                                    |
+        printf("hi\n");             |
+                                    |
+        printf("calling sub\n");    |
+        hello_world();              |
+                                    |
+    }                               |
+                                    |
+
+b) on the command line, compile by typing:
+
+        $ gcc -g -o temp temp2.c temp.c
+
+c) open temp.c and type "\d" to start the debug monitor
+
+   (assuming you have set <localleader> to "\" as suggested in the
+   settings/mappings section. You can set it to whatever you want though)
+
+d) In the system shell (e.g., bash), cd into \<dir\> and type
+
+        $ python -c 'import vim_pdb; vim_pdb.monitor_gdb_file()' &
+
+    (you can also just put 
+     alias gdb_monit="python2.7 -c 'import vim_pdb; vim_pdb.monitor_gdb_file()'"
+     in your .bashrc)
+
+   This code will monitor gdb.txt for outputs and update the files the vim
+   debugger is looking for as you step through the code.
+
+e) Finally, call gdb, removing some unnecesary files in the process (again,
+   this can be aliased):
+
+        (gdb) rm .debug_gdb_objs gdb.txt; gdb temp -x .gdbinit
+
+   This starts gdb. From the command line, set a breakpoint and run the program:
+
+        (gdb) b 11
+        (gdb) run
+
+   Notice that the cursor in vim has gone to line 11. In addition, because of
+   the breakpoint, the line is highlighted red. Let's clear that breakpoint:
+
+        (gdb) cl 11 
+
+    Notice that the red highlight is now gone. Let's continue stepping through
+    the code another 2 lines:
+
+        (gdb) s
+        (gdb) s
+
+    Vim has opened temp2.c and put the cursor on the appropriate line. We can
+    continue the code to the end:
+
+        (gdb) c
 
 f)  In Vim, type "\d" to end the debug monitor
 
