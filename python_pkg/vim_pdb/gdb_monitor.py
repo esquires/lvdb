@@ -142,7 +142,6 @@ def _monitor_gdb_file_helper():
                 continue
 
             fname = ln[fname_pos:colon_pos]
-            print('fname is ' + fname)
             if not "/" in fname:
                 fname = pwd + fname
 
@@ -200,7 +199,6 @@ def _monitor_gdb_file_helper():
             if type(item[1]) is int:
                 item[1] = [item[1]]
 
-            print(item[0] + '\n' + '[' + ", ".join([str(i) for i in item[1]]) + ']\n') 
             s += item[0] + '\n' + '[' + ", ".join([str(i) for i in item[1]]) + ']\n'
         s = s[:-1]
 
