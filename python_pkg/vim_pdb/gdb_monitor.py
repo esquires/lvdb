@@ -86,7 +86,7 @@ def _monitor_gdb_file_helper():
 
     pwd = os.getcwd() + os.sep
     try:
-        with open(fname_gdb) as f:
+        with open(fname_gdb, 'r') as f:
             lines_gdb = f.read().splitlines()
     except:
         #file not found so exit
@@ -127,8 +127,8 @@ def _monitor_gdb_file_helper():
                 pass
 
             try:
-                fname_pos = ln.index("at") + 3
-            except:
+                fname_pos = ln.index(" at ") + 4
+            except ValueError:
                 continue
 
             try:
