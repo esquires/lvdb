@@ -149,7 +149,7 @@ def go_to_debug_line(full_path, line_num):
             pass
 
         #for some reason, the filetype is not recognized automatically
-        if vim.eval("expand('%:e') == 'py'") == 1:
+        if vim.eval("expand('%:e') == 'py'") == '1':
             vim.command("set filetype=python")
         else:
             vim.command("set filetype=cpp")
