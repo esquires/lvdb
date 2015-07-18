@@ -142,8 +142,7 @@ def _monitor_gdb_file_helper():
                 continue
 
             fname = ln[fname_pos:colon_pos]
-            if not "/" in fname:
-                fname = pwd + fname
+            fname = os.path.abspath(fname)
 
             if os.path.basename(fname)[:2] == '0x':
 
@@ -153,10 +152,8 @@ def _monitor_gdb_file_helper():
                 comma_pos = ln.index(",", colon_pos)
                 fname_pos = colon_pos + 7
 
-                if not "/" in fname:
-                    fname = pwd + ln[fname_pos:comma_pos]
-                else:
-                    fname = ln[fname_pos:comma_pos]
+                fname = ln[fname_pos:comma_pos]
+                fname = os.path.abspath(fname)
 
                 ln_num = int(ln[comma_pos+7:-1])
                 bp_num = int(ln[L:space_pos])
