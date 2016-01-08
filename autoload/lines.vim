@@ -4,7 +4,7 @@
 "   numbering when using vim (useful for movements such as 4j)
 function! lines#ProcessAugroupSettings()
 
-    if     (g:vim_pdb_toggle_lines == g:vim_pdb_toggle_always_all)
+    if     (g:lvdb_toggle_lines == g:lvdb_toggle_always_all)
 
             setlocal nu
             setlocal rnu
@@ -16,15 +16,15 @@ function! lines#ProcessAugroupSettings()
                 autocmd FocusLost   *.* :call lines#Turn_on_abs_line_numbers()
             augroup END
 
-    elseif (g:vim_pdb_toggle_lines == g:vim_pdb_toggle_never)
+    elseif (g:lvdb_toggle_lines == g:lvdb_toggle_never)
 
             "stop the toggling
             augroup linenums_on_focus
                 autocmd!
             augroup END
 
-    elseif (g:vim_pdb_toggle_lines == g:vim_pdb_toggle_debug &&
-         \  g:vim_pdb_debug_mode   == g:vim_pdb_debug_off)
+    elseif (g:lvdb_toggle_lines == g:lvdb_toggle_debug &&
+         \  g:lvdb_debug_mode   == g:lvdb_debug_off)
 
             :call lines#Turn_off_abs_line_numbers()
 
@@ -33,9 +33,9 @@ function! lines#ProcessAugroupSettings()
                 autocmd!
             augroup END
 
-    elseif (g:vim_pdb_toggle_lines == g:vim_pdb_toggle_always) ||
-         \ (g:vim_pdb_toggle_lines == g:vim_pdb_toggle_debug &&
-         \  g:vim_pdb_debug_mode   == g:vim_pdb_debug_on)
+    elseif (g:lvdb_toggle_lines == g:lvdb_toggle_always) ||
+         \ (g:lvdb_toggle_lines == g:lvdb_toggle_debug &&
+         \  g:lvdb_debug_mode   == g:lvdb_debug_on)
 
             setlocal nu
             setlocal rnu

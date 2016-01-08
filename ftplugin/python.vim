@@ -1,1 +1,1 @@
-inoremap <buffer> <c-s> ipdb.set_trace()
+inoremap <buffer> <c-s> lvdb.set_trace()

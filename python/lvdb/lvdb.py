@@ -1,6 +1,7 @@
 from IPython.core.debugger import Pdb
 import os
-import bdb
+import ipdb
+import sys
 
 class VimPdb(Pdb, object):
     """extends IPython Pdb by outputting 2 files on the interaction event
@@ -93,7 +94,7 @@ class VimPdb(Pdb, object):
                         for i in range(int(len(lines)/2)):
 
                             #get the key (pathname)
-                            k     = lines[2*i]
+                            k = lines[2*i]
 
                             #get the associated list of breakpoints
                             lnums = lines[2*i+1][1:-1].split(',')
@@ -134,3 +135,26 @@ class VimPdb(Pdb, object):
         self._process_breakpoints()
         super(VimPdb, self).interaction(frame, traceback)
 
+def set_trace(frame=None):
+    ''' recreates ipdb.set_trace() but uses VimPdb class rather than Pdb
+
+        calls most of the ipdb.set_trace functionality and then does the rest
+        manually. this is required because the internal functions update_stdout
+        and wrap_sys_excepthook are not made available in the ipdb.__init__
+        script
+
+    '''
+    try:
+        ipdb.set_trace("a string as the frame argument causes an AttributeError")
+    except AttributeError:
+        pass
+
+    if frame is None:
+        frame = sys._getframe().f_back
+
+    # 'Linux' is the color definition. For a cross-platform implementation, see
+    # from IPython import get_ipython
+    # def_colors = get_ipython().colors
+    # on a linux system, def_colors will be 'Linux'
+    # if a need arises this will be made cross-platform
+    VimPdb('Linux').set_trace(frame)

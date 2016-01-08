@@ -2,4 +2,10 @@ tags
 */build/*
 */dist/*
 *.pyc
-*/vim_pdb\.egg-info/*
+*/lvdb\.egg-info/*
+*/.gdbinit
+*/.debug_gdb_objs
+*/.debug_location
+*/temp
+*/gdb.txt
+*.log

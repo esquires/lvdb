@@ -1,6 +1,6 @@
-function! vim_pdb#Python_debug()
+function! lvdb#Python_debug()
 "toggles debug mode on and off, doing the following
-"   1) global (g:vim_pdb_debug_mode) variable indicating whether debug mode is on
+"   1) global (g:lvdb_debug_mode) variable indicating whether debug mode is on
 "   2) sets an autocommand group to launch "Debug_monitor" function every 0.1 sec
 "   3) deletes the file ".debug" (toggling on or off)
 
@@ -10,18 +10,18 @@ function! vim_pdb#Python_debug()
     endif
 
     "start with clean files
-    call vim_pdb#Delete_file(".debug_location")
-    call vim_pdb#Delete_file(".debug_breakpoint")
+    call lvdb#Delete_file(".debug_location")
+    call lvdb#Delete_file(".debug_breakpoint")
 
-    if g:vim_pdb_debug_mode == g:vim_pdb_debug_off
+    if g:lvdb_debug_mode == g:lvdb_debug_off
 
         "1) debug mode was previously off, so turn it on
-        let g:vim_pdb_debug_mode = g:vim_pdb_debug_on
+        let g:lvdb_debug_mode = g:lvdb_debug_on
 
         "2) set autocommand group to launch "Debug_monitor"
         augroup python_debug
             autocmd!
-            autocmd CursorHold * :call vim_pdb#Debug_monitor()
+            autocmd CursorHold * :call lvdb#Debug_monitor()
         augroup END
 
         set updatetime=10      "do it every 0.01 seconds
@@ -29,23 +29,23 @@ function! vim_pdb#Python_debug()
         "3) clear old highlighting (make sure to keep pdb_set_trace)
         call pos#Set_current_pos()
         if hlexists('pdb_set_trace')
-            tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"
+            tabdo call clearmatches() | match pdb_set_trace "\v^\s*lvdb\.set_trace().*"
         endif 
         call pos#Return_to_orig_pos()
 
         "4) Update variables that keep track of file modification times
         let g:prev_time_debug_location = 0
         let g:prev_time_debug_breakpoint = 0
-        let g:vim_pdb_has_breakpoints = 0
+        let g:lvdb_has_breakpoints = 0
 
         "5) let the user know it has started
         execute "normal! 0"
         echo 'Python debug is turned on'
 
-    elseif g:vim_pdb_debug_mode == g:vim_pdb_debug_on
+    elseif g:lvdb_debug_mode == g:lvdb_debug_on
 
         "1) turn off debug mode
-        let g:vim_pdb_debug_mode = g:vim_pdb_debug_off
+        let g:lvdb_debug_mode = g:lvdb_debug_off
 
         "2) turn off autocommand that triggers debug mode
         augroup python_debug
@@ -58,7 +58,7 @@ function! vim_pdb#Python_debug()
         call pos#Set_current_pos()
         tabdo set nocursorline
         if hlexists('pdb_set_trace')
-            tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"
+            tabdo call clearmatches() | match pdb_set_trace "\v^\s*lvdb\.set_trace().*"
         endif 
         call pos#Return_to_orig_pos()
         redraw
@@ -69,7 +69,7 @@ function! vim_pdb#Python_debug()
         "5) remove necessary globals
         unlet g:prev_time_debug_location
         unlet g:prev_time_debug_breakpoint
-        unlet g:vim_pdb_has_breakpoints
+        unlet g:lvdb_has_breakpoints
 
     endif
 
@@ -78,7 +78,7 @@ function! vim_pdb#Python_debug()
 
 endfunction
 
-function! vim_pdb#Delete_file(fname)
+function! lvdb#Delete_file(fname)
 "deletes a file using the os module from python
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " start of python code
@@ -95,7 +95,7 @@ EOF
 
 endfunction
 
-function! vim_pdb#Debug_monitor()
+function! lvdb#Debug_monitor()
 "PURPOSE: reads .debug file in current directory and
 "
 "   1) Puts the cursor at the same line as the pdb debugger
@@ -218,7 +218,7 @@ def process_breakpoint_file():
 
                 vim.command('call pos#Set_current_pos()')
                 if vim.eval("hlexists('pdb_breakpoint')") == '1':
-                    vim.command('tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"')
+                    vim.command('tabdo call clearmatches() | match pdb_set_trace "\v^\s*lvdb\.set_trace().*"')
                 vim.command('call pos#Return_to_orig_pos()')
                 break
 
@@ -231,7 +231,7 @@ def process_breakpoint_file():
     #clear old highlighting (keeping the set_trace highlighting)
     vim.command('call pos#Set_current_pos()')
     if vim.eval("hlexists('pdb_set_trace')") == 1:
-        vim.command('tabdo call clearmatches() | match pdb_set_trace "\v^\s*ipdb\.set_trace().*"')
+        vim.command('tabdo call clearmatches() | match pdb_set_trace "\v^\s*lvdb\.set_trace().*"')
     vim.command('call pos#Return_to_orig_pos()')
 
     #open the .debug file, put it into lines (last line first)
@@ -239,9 +239,9 @@ def process_breakpoint_file():
         lines = f.read().splitlines()
 
     if lines:
-        vim.command('let g:vim_pdb_has_breakpoints = 1')
+        vim.command('let g:lvdb_has_breakpoints = 1')
     else:
-        vim.command('let g:vim_pdb_has_breakpoints = 0')
+        vim.command('let g:lvdb_has_breakpoints = 0')
 
     vim.command('let g:prev_time_debug_breakpoint = ' + str(os.path.getmtime(fname)))
 
