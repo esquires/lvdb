@@ -41,9 +41,7 @@ Install the VimPdb python plugin:
     Until then, we will add the lvdb/python_pkg to the PYTHONPATH
 
         cd lvdb/python_pkg
-        export PYTHONPATH=$PYTHONPATH:$(pwd):$(pwd)/bin
-        echo "export PYTHONPATH=$PYTHONPATH:$(pwd)" >> ~/.bashrc
-        export PATH=$PATH:$(pwd)/bin
+        python setup.py install     # possibly as root
 
     The code contained in this small package inherits the IPython debugger
     object, which inherits from PDB. The only addition is that it creates 2
