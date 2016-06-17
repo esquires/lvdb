@@ -18,6 +18,11 @@ def main():
     python_bin = 'python' + str(sysconfig.get_python_version())
     pid = subprocess.Popen([python_bin, '-c', "import lvdb; lvdb.monitor_gdb_file({})".format(args.debug)]).pid
 
+    for f in ['.debug_gdb_objs', '.debug_location', '.debug_breakpoint']:
+        try:
+            os.remove(f)
+        except OSError:
+            pass
     # start gdb (waiting until it exits)
     subprocess.call(['gdb', '-x', '.gdbinit', args.fname])
 

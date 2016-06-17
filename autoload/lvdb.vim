@@ -218,7 +218,12 @@ def process_breakpoint_file():
 
                 vim.command('call pos#Set_current_pos()')
                 if vim.eval("hlexists('pdb_breakpoint')") == '1':
-                    vim.command('tabdo call clearmatches() | match pdb_set_trace "\v^\s*lvdb\.set_trace().*"')
+                    vim.command('tabdo call clearmatches()')
+                    try:
+                        vim.command('match pdb_set_trace "\v^\s*lvdb\.set_trace().*"')
+                    except:
+                        # error occurs when not debugging python
+                        pass
                 vim.command('call pos#Return_to_orig_pos()')
                 break
 
@@ -231,7 +236,12 @@ def process_breakpoint_file():
     #clear old highlighting (keeping the set_trace highlighting)
     vim.command('call pos#Set_current_pos()')
     if vim.eval("hlexists('pdb_set_trace')") == 1:
-        vim.command('tabdo call clearmatches() | match pdb_set_trace "\v^\s*lvdb\.set_trace().*"')
+        vim.command('tabdo call clearmatches()')
+        try:
+            vim.command('match pdb_set_trace "\v^\s*lvdb\.set_trace().*"')
+        except:
+            # error occurs when not debugging python
+            pass
     vim.command('call pos#Return_to_orig_pos()')
 
     #open the .debug file, put it into lines (last line first)
