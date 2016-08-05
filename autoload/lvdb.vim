@@ -277,9 +277,13 @@ def process_breakpoint_file():
 
         for line_num in line_nums:
 
-            #highlight the line
-            s = 'call matchaddpos("pdb_breakpoint", [' + line_num + '])'
-            vim.command(s)
+            try:
+                #highlight the line
+                s = 'call matchaddpos("pdb_breakpoint", [' + line_num + '])'
+                vim.command(s)
+            except:
+                # not all versions of vim have matchaddpos
+                pass
 
 def main():
 
