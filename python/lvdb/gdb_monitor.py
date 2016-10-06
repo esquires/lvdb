@@ -4,12 +4,13 @@ import time
 import re
 import logging
 import pprint
+import subprocess
 
 POLL_INTERVAL = 0.05
 
 class LogHandler(object):
     ''' monitors gdb output (from "set logging on") and outputs 2 files for location/breakpoints
-        
+
         one could use the watchdog module but the latency between a modified
         event and the "on_modified" call is too long to be of use
     '''
@@ -102,19 +103,24 @@ class LogHandler(object):
             # read the file then clear it
             with open(self.FNAME_GDB, 'r') as f:
                 lines = f.read().splitlines()
-
-            self.logger.debug('processing file: {}'.format(self.FNAME_GDB))
-            self.logger.debug('lines = {}'.format(pprint.pformat(lines)))
-
-            if not lines:
-                self.logger.debug('exiting'.format(pprint.pformat(lines)))
-                return
-
-            with open(self.FNAME_GDB, 'w') as f:
-                pass
-
         except FileNotFoundError:
             return
+        except UnicodeError:
+            subprocess.call("tr -cd '\11\12\15\40-\176' <{} > {}" \
+                            .format(self.FNAME_GDB, self.FNAME_GDB),
+                            shell=True)
+            with open(self.FNAME_GDB, 'r') as f:
+                lines = f.read().splitlines()
+
+        self.logger.debug('processing file: {}'.format(self.FNAME_GDB))
+        self.logger.debug('lines = {}'.format(pprint.pformat(lines)))
+
+        if not lines:
+            self.logger.debug('exiting'.format(pprint.pformat(lines)))
+            return
+
+        with open(self.FNAME_GDB, 'w') as f:
+            pass
 
         self.last_mod = os.path.getmtime(self.FNAME_GDB)
         info_loc_updated = False
