@@ -143,7 +143,8 @@ def go_to_debug_line(full_path, line_num):
         vim.command("set cursorline")
 
         try:
-            vim.command("foldopen")
+            # we have already moved to line_num, so just use '.'
+            vim.command("let &foldlevel=foldlevel('.')")
         except:
             #ignore the error that occurs when there is no fold
             pass
