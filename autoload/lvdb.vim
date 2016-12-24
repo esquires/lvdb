@@ -129,7 +129,7 @@ def go_to_debug_line(full_path, line_num):
 
         #if found == 0 (the tab is not currently open), open a new tab
         #note that Look_for_matching_tab opens the tab for you in this case
-        if found == '0':
+        if found == '0' and full_path != 'None':
             vim.command("tabnew " + full_path)
 
         #go to the appropriate line
@@ -269,7 +269,7 @@ def process_breakpoint_file():
         found = vim.eval("tags#Look_for_matching_tab('" + full_path + "')")
 
         #if the file has not been opened, open it
-        if found == '0':
+        if found == '0' and full_path != 'None':
             vim.command("tabnew " + full_path)
 
         #convert lines to a list

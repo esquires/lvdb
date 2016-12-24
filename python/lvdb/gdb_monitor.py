@@ -184,8 +184,12 @@ class LogHandler(object):
                     self.logger.debug('fname is a memory location, looking further in the line')
                     #Breakpoint 2 at 0x40050c: file sub/sub.c, line 4.
                     L = len("breakpoint ")
-                    space_pos = ln.index(" ", L+1)
-                    comma_pos = ln.index(",", colon_pos)
+                    try:
+                        space_pos = ln.index(" ", L+1)
+                        comma_pos = ln.index(",", colon_pos)
+                    except ValueError:
+                        continue
+
                     fname_pos = colon_pos + 7
 
                     fname = ln[fname_pos:comma_pos]
@@ -254,7 +258,7 @@ class LogHandler(object):
             else:
                 _rm_file(self.FNAME_BRK)
 
-        if info_loc_updated and self.info_loc:
+        if info_loc_updated and self.info_loc and self.info_loc[0]:
             self.logger.debug('printing out info_loc = {}'.format(pprint.pformat(self.info_loc)))
             with open(self.FNAME_LOC, 'w') as f:
                 f.write("%s\n%s" % (self.info_loc[0], self.info_loc[1]))
