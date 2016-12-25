@@ -19,10 +19,20 @@ function! lvdb#Python_debug()
         let g:lvdb_debug_mode = g:lvdb_debug_on
 
         "2) set autocommand group to launch "Debug_monitor"
-        augroup python_debug
-            autocmd!
-            autocmd CursorHold * :call lvdb#Debug_monitor()
-        augroup END
+        let g:amt = 1
+        try
+            " better to call a timer but this requires 
+            " (a) a version of vim after 7.4.1578 and
+            " (b) compilation with +timers
+            call timer_start(10, 'lvdb#Debug_monitor', {'repeat': -1})
+            let g:lvdb_has_timers = 1
+        catch
+            augroup python_debug
+                autocmd!
+                autocmd CursorHold * :call lvdb#Debug_monitor()
+            augroup END
+            let g:lvdb_has_timers = 0
+        endtry 
 
         set updatetime=10      "do it every 0.01 seconds
 
@@ -48,9 +58,11 @@ function! lvdb#Python_debug()
         let g:lvdb_debug_mode = g:lvdb_debug_off
 
         "2) turn off autocommand that triggers debug mode
-        augroup python_debug
-            autocmd!
-        augroup END
+        if g:lvdb_has_timers == 0
+            augroup python_debug
+                autocmd!
+            augroup END
+        end 
 
         set updatetime=4000     "back to default time
 
@@ -95,7 +107,7 @@ EOF
 
 endfunction
 
-function! lvdb#Debug_monitor()
+function! lvdb#Debug_monitor(...)
 "PURPOSE: reads .debug file in current directory and
 "
 "   1) Puts the cursor at the same line as the pdb debugger
@@ -106,7 +118,15 @@ function! lvdb#Debug_monitor()
 "   The function is called by the OnCursorHold event
 "   (note the use of feedkeys below to make sure the event occurs routinely)
 
-call feedkeys("hl")
+if a:0 == 0
+    " called using OnCursorHold event with no arguments
+    " otherwise a:1 is a timer
+    call feedkeys("hl")
+endif 
+if g:lvdb_has_timers && g:lvdb_debug_mode == g:lvdb_debug_off
+    call timer_stop(a:1)
+    return
+endif 
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " start of python code
