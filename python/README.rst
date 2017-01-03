@@ -62,6 +62,14 @@ vimrc:
     let g:lvdb_toggle_lines = 2     # always toggle lines for *.py files
     let g:lvdb_toggle_lines = 3     # always toggle lines for all files
 
+When debugging, many tabs can sometimes be opened so lvdb will keep track of
+what it has opened and close them when the debugger moves out of that tab. To
+disable this behavior, set
+
+    let g:lvdb_close_opened_tabs = 0
+
+in your .vimrc 
+
 Sample Workflow (python debugging)
 ----------------------------------
 
