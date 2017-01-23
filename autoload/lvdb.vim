@@ -47,8 +47,6 @@ function! lvdb#Python_debug()
         let g:prev_time_debug_location = 0
         let g:prev_time_debug_breakpoint = 0
         let g:lvdb_has_breakpoints = 0
-        let g:lvdb_tabs_opened = {}
-        let g:lvdb_close_opened_tabs = get(g:, 'lvdb_close_opened_tabs', "1")
 
         "5) let the user know it has started
         execute "normal! 0"
@@ -147,23 +145,12 @@ def go_to_debug_line(full_path, line_num):
         #an error can occur when user decides not to open a tab
 
         #found is 1 when there is an open tab matching the full path
-        curr_tab_num = vim.eval("tabpagenr()")
-        curr_tab_path = vim.eval("expand('%:p')")
         found = vim.eval("tags#Look_for_matching_tab('" + full_path + "')")
 
         #if found == 0 (the tab is not currently open), open a new tab
         #note that Look_for_matching_tab opens the tab for you in this case
         if found == '0' and full_path != 'None':
             vim.command("tabnew " + full_path)
-            # using dictionary as a set here since sets aren't available in vim
-            if vim.eval("g:lvdb_close_opened_tabs"):
-                vim.command("let g:lvdb_tabs_opened['" + full_path + "'] = ''")
-        elif vim.eval("g:lvdb_close_opened_tabs") and curr_tab_num != vim.eval("tabpagenr()"):
-            if vim.eval("has_key(g:lvdb_tabs_opened, '" + full_path + "')"):
-                found = vim.eval("tags#Look_for_matching_tab('" + curr_tab_path + "')")
-                if found:
-                    vim.command("tabclose")
-                vim.eval("tags#Look_for_matching_tab('" + full_path + "')")
 
         #go to the appropriate line
         vim.command('execute "normal! ' + line_num + 'G"')
