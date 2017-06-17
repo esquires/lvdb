@@ -1,54 +1,43 @@
 lvdb
 ====
 
-Links Vim to ipdb and gdb for lightweight but powerful debugging.
+Links Vim to ipdb and gdb for lightweight but powerful debugging. Vim does
+*not* have to be compiled with "+python".
 
 Installation
 ------------
 
-This plugin requires vim to be compiled with the `+python` flag. If your
-version of vim has this capability, the following command should give some
-output. If it doesn't, one can recompile with `--enable-pythoninterp` set in
-the configure script::
-
-    vim --version | grep +python
-
 Install python dependencies::
 
-    pip install IPython ipdb
+    # ubuntu 16.04 or later
+    # alternatively, sudo apt-get install ipython3 python3-ipdb python3-setuptools
+    apt-get install ipython python-ipdb python3-setuptools
 
-Install the Vim plugin
+Install the Vim plugin (if using pathogen):
 
-* If using Pathogen, then execute from the top level directory of this repo::
+    cd ~/.vim/bundle
+    git clone https://github.com/esquires/lvdb
 
-        ln -s $(pwd) ~/.vim/bundle/lvdb
+Install the python plugin (only necessary for debugging python files):
 
-* If not using Pathogen, Place the contents of `autoload`, `ftplugin`,
-  `plugin`, and `syntax` in `~/.vim/autoload`, `~/.vim/ftplugin`,
-  `~/.vim/plugin`, and `~/.vim/syntax`.
-
-Install the python plugin:
-
-    python setup.py install 
+    python setup.py install
 
 Mappings/Settings
 -----------------
 
-To start the vim debugging monitor (can also be called with ":call lvdb#Python_debug()")
+To start/stop the vim debugging monitor:
 
-    <localleader>d
-    or
     :call lvdb#Python_debug()
 
 To toggle absolute and relative line numbers
 
-    <localleader>n
-    or
     :call lvdb#ToggleNumber()
 
-If you don't have a local leader set, put the following in your .vimrc
+An example of mapping these commands is:
 
-    let maplocalleader = "\\"
+    let mapleader = "\<space>"
+    nnoremap <leader>d :call lvdb#Python_debug()<cr>
+    nnoremap <leader>n :call lines#ToggleNumber()<cr>
 
 lvdb will also toggle line numbers automatically if you desire (see :h rnu and
 :h nu for details. The toggling is only available for gvim). When debugging
@@ -65,92 +54,57 @@ vimrc:
 Sample Workflow (python debugging)
 ----------------------------------
 
-1. cd into tests and open `temp.py`. Note that the vim pwd has to match the
-   directory you are calling python from (i.e., ":pwd" in Vim must match "$
-   pwd" in the shell). Notice that the `lvdb.set_trace()` line is highlighted.
-   If it is not, then something is probably turning your syntax off.  Check
-   your other plugins or vimrc. You can set syntax on by typing ":syntax on"
+1. cd into tests and open `temp.py`. Notice that the `lvdb.set_trace()` line is
+   highlighted.  If it is not, then something is probably turning your syntax
+   off.  Check your other plugins or vimrc. You can set syntax on by typing
+   ":syntax on"
 
 2. In vim, type `\d` to start the debug monitor
 
    (assuming you have set <localleader> to "\" as suggested in the
-   settings/mappings section. You can set it to whatever you want though)
+   mappings/settings section. You can set it to whatever you want though)
 
 3. In the system shell (e.g., bash), type
 
-        python temp1.py     # or from ipython, %run temp1.py
+        python temp1.py
 
-   ipdb will start and break at the `lvdb.set_trace()` line (this is a
-   does the same thing as ipdb but outputs some debugging information so vim
-   knows what line/file ipdb is at). In addition, Vim will jump to the same
-   location.
+   lvdb will start and break at the `lvdb.set_trace()` line (this does the same
+   thing as ipdb but outputs some debugging information so vim knows what
+   line/file ipdb is at). In addition, vim will jump to the same location.
 
-4. To set a breakpoint (the commands below are native to pdb), from the
-   system shell type
+   You can now type "s" or "n" to step through the code as normal. Vim will
+   update the active line or open a new tab if a new file is encountered in the
+   code.
 
-        b 11
-
-   This will set a breakpoint at line 11 of `temp.py`. Now type
-
-        s
-
-   to step 1 line forward in the code. You should see Vim now highlight
-   line 11 as well. You can now type
-
-        c
-
-   and the code will run to the newly established breakpoint. Type
-
-        cl
-
-   to clear the breakpoint. and
-
-        s
-
-   to step again. You should see the breakpoint cleared in Vim. In
-   addition to the above commands, all the niceties of IPython and ipdb
-   are available from the shell, including object inspection, tab
-   completion, etc.
-
-5. In Vim, type `\d` to end the debug monitor. This will also remove the
-   outputs lvdb outputs when the set_trace command is hit.
+4. In Vim, type `\d` to end the debug monitor.
 
 Sample Workflow (gdb debugging)
 -------------------------------
 
-1. on the command line, cd into `lvdb/tests` and compile by typing:
+1. Create a .gdbinit file with the following contents:
+    
+        set logging file /tmp/lvdb.txt
+        set logging on
+
+2. on the command line, cd into `lvdb/tests` and compile by typing:
 
         $ gcc -g -o temp temp1.c temp2.c
 
-2. open `temp1.c` in vim and type "\d" to start the debug monitor
+3. open `temp1.c` in vim and type "\d" to start the debug monitor
 
    (assuming you have set <localleader> to "\" as suggested in the
    settings/mappings section. You can set it to whatever you want though)
 
-3. In the system shell (e.g., bash), type
+4. In the system shell (e.g., bash), type
 
-        $ vim_gdb temp
+        $ gdb -x .gdbinit -f temp
 
-   Note that `.gdbinit` contains `set logging on`. This file should always be
-   in the directory you call vim_gdb from. This code will call `gdb temp` while
-   also starting a monitor in the background. Notice that the cursor in vim has
-   gone to line 11. In addition, because of the breakpoint, the line is
-   highlighted red. Let's clear that breakpoint:
+5. :T You can now type "s" or "n" to step through the code as normal. Vim will
+   update the active line or open a new tab if a new file is encountered in the
+   code.
 
-        (gdb) cl 11 
 
-    Notice that the red highlight is now gone. Let's continue stepping through
-    the code another 2 lines:
-
-        (gdb) s
-        (gdb) s
-
-    Vim has opened `temp2.c` and put the cursor on the appropriate line. We can
-    continue the code to the end:
-
-        (gdb) c
-
-4.  In Vim, type `\d` to end the debug monitor
+6.  In Vim, type `\d` to end the debug monitor
 
 Background
 ----------
@@ -161,25 +115,24 @@ the code. lvdb incorporates this functionality. Specifically, it
 
 * updates the cursor line in vim to match where pdb is in the debugging process
 
-* Highlights/deletes breakpoints that have been set on the fly in pdb. It also
-  highlights lvdb.set_trace() lines when using lvdb.
+* Highlights lvdb.set_trace() lines when using lvdb.
 
 lvdb has been designed to be simple and lightweight but give full access to
 ipdb and gdb. For python, it does this as follows:
 
-* The python installation makes sure 2 files are created when a
-  `lvdb.set_trace()` is hit. These are `.debug_location` and `.debug_breakpoint`,
-  and they contain the current state of the debugger.
+* The python installation makes sure a '.debug_location' file is created when a
+  `lvdb.set_trace()` is hit. It contains the current state of the debugger.
 
-* When the user tells Vim to start the debug monitor, Vim will monitor
-  `.debug_location` and `.debug_breakpoint`. From `.debug_location`, it will
-  set the cursor to match where ipdb is in the code. Thus, the user can follow
-  where ipdb is within Vim. From `.debug_breakpoint`, Vim sets highlighting so
-  the user can know where the breakpoint is located.
+* When the user tells vim to start the debug monitor, vim will monitor
+  `.debug_location`. From `.debug_location`, it will set the cursor to match
+  where ipdb is in the code.
 
-For gdb, it does this by having an external script monitor (see
-`gdb_monitor.py` in the `python/lvdb` folder) that also updates
-`.debug_breakpoint` and `.debug_location`.
+For gdb, setting
+
+    set logging file /tmp/lvdb.txt
+    set logging on
+
+in .gdbinit will make sure that the output can be read by vim. 
 
 License
 ----------

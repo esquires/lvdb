@@ -8,13 +8,10 @@ setup(name='lvdb',
       version='1.0rc1',
       description='python plugin for vim debugger',
       long_description=readme(),
-      url='https://github.com/esquires/vim-pdb',
+      url='https://github.com/esquires/lvdb',
       author='Eric Squires',
       author_email='eric.g.squires@gmail.com',
       license='GPL',
-      entry_points={
-          'console_scripts': ['vim_gdb=lvdb.vim_gdb:main']
-      },
       classifiers=[
           'Development Status :: 4 - Beta',
           'Intended Audience :: Developers',

@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+int hello_world();
+
 int main() {
 
     int a;
@@ -9,8 +11,6 @@ int main() {
     a = 1;
     b = a + 5;
     c = a + b;
-
-    printf("hi\n");
 
     printf("calling sub\n");
     hello_world();
