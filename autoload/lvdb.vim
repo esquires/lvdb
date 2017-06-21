@@ -20,17 +20,9 @@ function! lvdb#Python_debug()
             augroup END
             let g:lvdb_has_timers = 0
             set updatetime=10      "do it every 0.01 seconds
+          execute "normal! 0"
         endtry 
 
-        "4) Update variables that keep track of file modification times
-        let g:prev_time_debug_location = 0
-        let g:prev_time_debug_breakpoint = 0
-        let g:lvdb_has_breakpoints = 0
-
-        "5) let the user know it has started
-        execute "normal! 0"
-        let g:lvdb_fname = ""
-        let g:lvdb_line = ""
         echo 'Python debug is turned on'
 
     elseif g:lvdb_debug_mode == g:lvdb_debug_on
@@ -49,11 +41,6 @@ function! lvdb#Python_debug()
 
         "4) tell the user it has stopped
         echo 'Python debug is turned off'
-
-        "5) remove necessary globals
-        unlet g:prev_time_debug_location
-        unlet g:prev_time_debug_breakpoint
-        unlet g:lvdb_has_breakpoints
 
         set nocursorline
     endif
@@ -102,13 +89,13 @@ function! lvdb#process_location_file()
 
     let line = data[1]
 
-    if fname[0] != "/" || (fname == g:lvdb_fname && line == g:lvdb_line)
+    let curr_fname = expand('%:p')
+    let curr_line = line(".")
+    if fname[0] != "/" || (fname == curr_fname && line == curr_line)
         return
     endif
 
     set cursorline
-    let g:lvdb_fname = fname
-    let g:lvdb_line = line
 
     let found = tags#Look_for_matching_tab(fname)
 
