@@ -72,41 +72,54 @@ function! lvdb#process_location_file()
     let lines = readfile(g:lvdb_gdb_output_file)
     call writefile([], g:lvdb_gdb_output_file)
 
-    if len(lines) == 0
+    let len_lines = len(lines)
+    if len_lines == 0
         return
     endif 
 
-    let data = split(lines[-1], ':')
-    let fname = data[0]
-    if fname[0] == ''
-        " gdb sometimes puts  at the beginning of the filename
-        let fname = fname[2:]
-    endif 
+    let idx = -1
+    while -idx <= len_lines
 
-    if fname[0] != "/"
-        return
-    endif 
+        let data = split(lines[idx], ':')
+        let idx -= 1
 
-    let line = data[1]
+        if len(data) < 2
+            continue
+        endif 
 
-    let curr_fname = expand('%:p')
-    let curr_line = line(".")
-    if fname[0] != "/" || (fname == curr_fname && line == curr_line)
-        return
-    endif
+        let fname = data[0]
+        if fname[0] == ''
+            " gdb sometimes puts  at the beginning of the filename
+            let fname = fname[2:]
+        endif 
 
-    set cursorline
+        if fname[0] != "/"
+            continue
+        endif 
 
-    let found = tags#Look_for_matching_tab(fname)
+        let line = data[1]
 
-    if found == 0
-        exec "tabnew " . fname
-    endif
+        let curr_fname = expand('%:p')
+        let curr_line = line(".")
+        if fname[0] != "/" || (fname == curr_fname && line == curr_line)
+            continue
+        endif
 
-    exec line
+        set cursorline
 
-    try
-        let &foldlevel=foldlevel('.')
-    endtry 
+        let found = tags#Look_for_matching_tab(fname)
+
+        if found == 0
+            exec "tabnew " . fname
+        endif
+
+        exec line
+
+        try
+            let &foldlevel=foldlevel('.')
+        endtry 
+
+        break
+    endwhile 
 
 endfunction 
