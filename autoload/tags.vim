@@ -8,6 +8,13 @@ function! tags#Look_for_matching_tab(fname)
         return 1
     endif
 
+    if getftype(a:fname) == "link"
+        let search_for = resolve(a:fname)
+        echom 'updating from ' . a:fname ' to ' . search_for
+    else 
+        let search_for = a:fname
+    endif
+
     "get current tab number
     let tab_num = tabpagenr()
     tabnext
@@ -16,7 +23,7 @@ function! tags#Look_for_matching_tab(fname)
     while tabpagenr() != tab_num
 
         " if the tab name is equal to the input fname
-        if a:fname ==# expand('%:p')
+        if search_for ==# expand('%:p')
             "return that it has been found
             return 1
         endif
