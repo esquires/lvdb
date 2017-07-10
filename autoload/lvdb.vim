@@ -42,7 +42,14 @@ function! lvdb#Python_debug()
         "4) tell the user it has stopped
         echo 'Python debug is turned off'
 
-        set nocursorline
+        " from
+        " http://vim.1045645.n5.nabble.com/tabdo-get-back-to-original-tab-td5729351.html
+        let save_tab = tabpagenr()
+        let save_win = winnr() 
+        tabdo let save_win_temp = winnr() | windo set nocursorline | exe save_win_temp "wincmd w"
+        exe "tabnext" save_tab
+        exe save_win "wincmd w"
+
     endif
 
     "in case the user has updated their line number toggle settings, update it
