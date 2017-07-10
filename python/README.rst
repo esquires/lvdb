@@ -4,10 +4,15 @@ lvdb
 Links Vim to ipdb and gdb for lightweight but powerful debugging. Vim does
 *not* have to be compiled with "+python".
 
+ipdb and gdb are text-based debuggers. Although they can give code context with
+the "list" command, it would be helpful to have vim highlight where you are in
+the code. lvdb incorporates this functionality.
+
 Installation
 ------------
 
-Install python dependencies::
+Install python dependencies (if you want to debug python. This is not necessary
+for using gdb)::
 
     # ubuntu 16.04 or later
     # alternatively, sudo apt-get install ipython3 python3-ipdb python3-setuptools
@@ -105,34 +110,6 @@ Sample Workflow (gdb debugging)
 
 
 6.  In Vim, type `\d` to end the debug monitor
-
-Background
-----------
-
-ipdb and gdb are text-based debuggers. Although they can give code context with
-the "list" command, it would be helpful to have vim highlight where you are in
-the code. lvdb incorporates this functionality. Specifically, it
-
-* updates the cursor line in vim to match where pdb is in the debugging process
-
-* Highlights lvdb.set_trace() lines when using lvdb.
-
-lvdb has been designed to be simple and lightweight but give full access to
-ipdb and gdb. For python, it does this as follows:
-
-* The python installation makes sure a '.debug_location' file is created when a
-  `lvdb.set_trace()` is hit. It contains the current state of the debugger.
-
-* When the user tells vim to start the debug monitor, vim will monitor
-  `.debug_location`. From `.debug_location`, it will set the cursor to match
-  where ipdb is in the code.
-
-For gdb, setting
-
-    set logging file /tmp/lvdb.txt
-    set logging on
-
-in .gdbinit will make sure that the output can be read by vim. 
 
 License
 ----------
