@@ -24,7 +24,7 @@ function! lines#ProcessAugroupSettings()
             augroup END
 
     elseif (g:lvdb_toggle_lines == g:lvdb_toggle_debug &&
-         \  g:lvdb_debug_mode   == g:lvdb_debug_off)
+         \  g:lvdb_debug_mode   == 0)
 
             :call lines#Turn_off_abs_line_numbers()
 
@@ -35,7 +35,7 @@ function! lines#ProcessAugroupSettings()
 
     elseif (g:lvdb_toggle_lines == g:lvdb_toggle_always) ||
          \ (g:lvdb_toggle_lines == g:lvdb_toggle_debug &&
-         \  g:lvdb_debug_mode   == g:lvdb_debug_on)
+         \  g:lvdb_debug_mode   == 1)
 
             setlocal nu
             setlocal rnu

@@ -1,12 +1,11 @@
 function! lvdb#Python_debug()
     "make sure python support is installed
-    if g:lvdb_debug_mode == g:lvdb_debug_off
+    if g:lvdb_debug_mode == 0
 
-        "1) debug mode was previously off, so turn it on
-        let g:lvdb_debug_mode = g:lvdb_debug_on
+        " debug mode was previously off, so turn it on
+        let g:lvdb_debug_mode = 1
 
-        "2) set autocommand group to launch "Debug_monitor"
-        let g:amt = 1
+        " set autocommand group to launch "Debug_monitor"
         try
             " better to call a timer but this requires 
             " (a) a version of vim after 7.4.1578 and
@@ -25,12 +24,13 @@ function! lvdb#Python_debug()
 
         echo 'Python debug is turned on'
 
-    elseif g:lvdb_debug_mode == g:lvdb_debug_on
+    elseif g:lvdb_debug_mode == 1
 
-        "1) turn off debug mode
-        let g:lvdb_debug_mode = g:lvdb_debug_off
 
-        "2) turn off autocommand that triggers debug mode
+        " turn off debug mode
+        let g:lvdb_debug_mode = 0
+
+        " turn off autocommand that triggers debug mode
         if g:lvdb_has_timers == 0
             augroup python_debug
                 autocmd!
@@ -39,7 +39,7 @@ function! lvdb#Python_debug()
 
         set updatetime=4000     "back to default time
 
-        "4) tell the user it has stopped
+        " tell the user it has stopped
         echo 'Python debug is turned off'
 
         " from
@@ -63,7 +63,7 @@ function! lvdb#Debug_monitor(...)
         " otherwise a:1 is a timer
         call feedkeys("hl")
     endif 
-    if g:lvdb_has_timers && g:lvdb_debug_mode == g:lvdb_debug_off
+    if g:lvdb_has_timers && g:lvdb_debug_mode == 0
         call timer_stop(a:1)
         return
     endif 
