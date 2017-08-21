@@ -1,4 +1,6 @@
 function! lvdb#Python_debug()
+    let g:lvdb_opened_tabs = {}
+
     "make sure python support is installed
     if g:lvdb_debug_mode == 0
 
@@ -26,6 +28,7 @@ function! lvdb#Python_debug()
 
     elseif g:lvdb_debug_mode == 1
 
+        let g:lvdb_opened_tabs = {}
 
         " turn off debug mode
         let g:lvdb_debug_mode = 0
@@ -114,11 +117,23 @@ function! lvdb#process_location_file()
 
         set cursorline
 
+        if g:lvdb_close_tabs == 1
+            let prev_tabpagenr = tabpagenr()
+        endif 
+
         let found = tags#Look_for_matching_tab(fname)
 
         if found == 0
             exec "tabnew " . fname
+            if g:lvdb_close_tabs == 1
+                let g:lvdb_opened_tabs[fname] = ''
+            endif 
         endif
+
+        if g:lvdb_close_tabs == 1 && has_key(g:lvdb_opened_tabs, curr_fname)
+            call execute('tabclose ' . prev_tabpagenr)
+            unlet g:lvdb_opened_tabs[curr_fname]
+        endif 
 
         exec line
 

@@ -6,6 +6,7 @@ let g:lvdb_toggle_always_all = 3
 
 "default to not in debug mode
 let g:lvdb_debug_mode = 0
+let g:lvdb_close_tabs = 0
 
 let g:lvdb_gdb_output_file = '/tmp/lvdb.txt'
 
