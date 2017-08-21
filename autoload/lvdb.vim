@@ -115,8 +115,6 @@ function! lvdb#process_location_file()
             continue
         endif
 
-        set cursorline
-
         if g:lvdb_close_tabs == 1
             let prev_tabpagenr = tabpagenr()
         endif 
@@ -136,6 +134,7 @@ function! lvdb#process_location_file()
         endif 
 
         exec line
+        set cursorline
 
         try
             let &foldlevel=foldlevel('.')
