@@ -1,14 +1,16 @@
-from IPython.core.debugger import Pdb
+from IPython.core.debugger import Pdb, decorate_fn_with_doc
 import os
-import ipdb
 import sys
-from pprint import pprint
+
+import ipdb
+
 
 class Lvdb(Pdb, object):
-    """extends IPython Pdb by outputting 2 files on the interaction event
+    """extends IPython Pdb by outputting 2 files on the interaction event.
 
     .debug_location: filename:line_num
     """
+
     f_loc = "/tmp/lvdb.txt"
 
     def __init__(self, *args, **kwargs):
@@ -16,8 +18,7 @@ class Lvdb(Pdb, object):
         self.line = None
         super(Lvdb, self).__init__(*args, **kwargs)
 
-    def interaction(self, frame, traceback):
-
+    def _write_frame(self, frame):
         if frame and frame.f_code:
 
             fname = os.path.abspath(frame.f_code.co_filename)
@@ -30,18 +31,32 @@ class Lvdb(Pdb, object):
                 self.fname = fname
                 self.line = line
 
-        # call ipdb as normal
+    def interaction(self, frame, traceback):
+        self._write_frame(frame)
         super(Lvdb, self).interaction(frame, traceback)
 
+    def new_do_up(self, arg):
+        super(Lvdb, self).new_do_up(arg)
+        self._write_frame(self.curframe) 
+
+    do_u = do_up = decorate_fn_with_doc(new_do_up, Pdb.do_up)
+
+    def new_do_down(self, arg):
+        super(Lvdb, self).new_do_down(arg)
+        self._write_frame(self.curframe)
+
+    do_d = do_down = decorate_fn_with_doc(new_do_down, Pdb.do_down)
+
+
+
 def set_trace(frame=None):
-    ''' recreates ipdb.set_trace() but uses Lvdb class rather than Pdb
+    """Recreates ipdb's set_trace but uses Lvdb class rather than Pdb.
 
-        calls most of the ipdb.set_trace functionality and then does the rest
-        manually. this is required because the internal functions update_stdout
-        and wrap_sys_excepthook are not made available in the ipdb.__init__
-        script
-
-    '''
+    calls most of the ipdb.set_trace functionality and then does the rest
+    manually. this is required because the internal functions update_stdout
+    and wrap_sys_excepthook are not made available in the ipdb.__init__
+    script
+    """
     try:
         ipdb.set_trace("a string as the frame argument causes an AttributeError")
     except AttributeError:
