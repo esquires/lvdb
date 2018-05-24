@@ -1,11 +1,12 @@
-from IPython.core.debugger import Pdb, decorate_fn_with_doc
 import os
 import sys
 
+from IPython.core.debugger import decorate_fn_with_doc
+from IPython.terminal.debugger import TerminalPdb
 import ipdb
 
 
-class Lvdb(Pdb, object):
+class Lvdb(TerminalPdb, object):
     """extends IPython Pdb by outputting 2 files on the interaction event.
 
     .debug_location: filename:line_num
@@ -37,16 +38,15 @@ class Lvdb(Pdb, object):
 
     def new_do_up(self, arg):
         super(Lvdb, self).new_do_up(arg)
-        self._write_frame(self.curframe) 
+        self._write_frame(self.curframe)
 
-    do_u = do_up = decorate_fn_with_doc(new_do_up, Pdb.do_up)
+    do_u = do_up = decorate_fn_with_doc(new_do_up, TerminalPdb.do_up)
 
     def new_do_down(self, arg):
         super(Lvdb, self).new_do_down(arg)
         self._write_frame(self.curframe)
 
-    do_d = do_down = decorate_fn_with_doc(new_do_down, Pdb.do_down)
-
+    do_d = do_down = decorate_fn_with_doc(new_do_down, TerminalPdb.do_down)
 
 
 def set_trace(frame=None):
