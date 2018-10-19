@@ -1,18 +1,18 @@
 lvdb
 ====
 
-Links Vim to ipdb and gdb for lightweight but powerful debugging. Vim does
-*not* have to be compiled with "+python".
+Links Vim to ipdb, lldb, and gdb for lightweight but powerful debugging. Vim
+does *not* have to be compiled with "+python".
 
-ipdb and gdb are text-based debuggers. Although they can give code context with
-the "list" command, it would be helpful to have vim highlight where you are in
-the code. lvdb incorporates this functionality.
+ipdb, lldb, and gdb can be used as text-based debuggers. Although they can give
+code context with the "list" command, it would be helpful to have vim highlight
+where you are in the code. lvdb incorporates this functionality.
 
 Installation
 ------------
 
 Install python dependencies (if you want to debug python. This is not necessary
-for using gdb)::
+for using lldb or gdb)::
 
     # ubuntu 16.04 or later
     # alternatively, sudo apt-get install ipython3 python3-ipdb python3-setuptools
@@ -87,6 +87,33 @@ Sample Workflow (python debugging)
 
 4. In Vim, type `\d` to end the debug monitor.
 
+Sample Workflow (lldb debugging)
+--------------------------------
+
+1. Compile the code
+
+    $ gcc -g -o temp temp1.c temp2.c
+
+2. start lldb
+
+    $ lldb temp
+    
+3. Source the provided ``lvdb_lldb_helper.py`` script (this can be put in a `~/.lldbinit` file)
+
+    (lldb) command script import /path_to_this_repo/python/lvdb/lvdb_lldb_helper.py
+
+4. In another terminal, open `temp1.c` in vim and type "\d" to start the debug monitor
+
+   (assuming you have set <localleader> to "\" as suggested in the
+   settings/mappings section. You can set it to whatever you want though)
+
+5. You can now type "s" or "n" to step through the code as normal. Vim will
+   update the active line or open a new tab if a new file is encountered in the
+   code.
+
+6.  In Vim, type `\d` to end the debug monitor
+
+
 Sample Workflow (gdb debugging)
 -------------------------------
 
@@ -108,10 +135,9 @@ Sample Workflow (gdb debugging)
 
         $ gdb -x .gdbinit -f temp
 
-5. :T You can now type "s" or "n" to step through the code as normal. Vim will
+5. You can now type "s" or "n" to step through the code as normal. Vim will
    update the active line or open a new tab if a new file is encountered in the
    code.
-
 
 6.  In Vim, type `\d` to end the debug monitor
 
