@@ -17,12 +17,13 @@ class Lvdb(TerminalPdb, object):
     def __init__(self, *args, **kwargs):
         self.fname = None
         self.line = None
+        self.orig_cwd = os.getcwd()
         super(Lvdb, self).__init__(*args, **kwargs)
 
     def _write_frame(self, frame):
         if frame and frame.f_code:
 
-            fname = os.path.abspath(frame.f_code.co_filename)
+            fname = os.path.join(self.orig_cwd, frame.f_code.co_filename)
             line = frame.f_lineno
 
             if fname != self.fname or line != self.line:
