@@ -56,9 +56,14 @@ vimrc:
     let g:lvdb_toggle_lines = 2     # always toggle lines for *.py files
     let g:lvdb_toggle_lines = 3     # always toggle lines for all files
 
-Finally, if you want lvdb to close files that it has opened you can set 
+If you want lvdb to close files that it has opened you can set 
 
     let g:lvdb_close_tabs = 1       # default 0
+
+Finally, lvdb will echo whether it is running when you call ``Python_debug().
+To silence this, set
+
+    let g:lvdb_silent = 1       # default 0
 
 Sample Workflow (python debugging)
 ----------------------------------

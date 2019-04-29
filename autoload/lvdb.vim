@@ -1,4 +1,27 @@
 function! lvdb#Python_debug()
+    if !exists("g:lvdb_silent")
+        let g:lvdb_silent = 0
+    endif
+
+    if !exists("g:lvdb_debug_mode")
+        let g:lvdb_debug_mode = 0
+    endif
+
+    if !exists("g:lvdb_toggle_lines")
+        let g:lvdb_toggle_lines = 0
+    endif
+
+    if !exists("g:lvdb_toggle_never")
+        let g:lvdb_toggle_never = 0
+        let g:lvdb_toggle_debug = 1
+        let g:lvdb_toggle_always = 2
+        let g:lvdb_toggle_always_all = 3
+    endif
+
+    if !exists("g:lvdb_gdb_output_file")
+        let g:lvdb_gdb_output_file = '/tmp/lvdb.txt'
+    endif
+
     let g:lvdb_opened_tabs = {}
 
     "make sure python support is installed
@@ -24,7 +47,9 @@ function! lvdb#Python_debug()
           execute "normal! 0"
         endtry 
 
-        echo 'Python debug is turned on'
+        if !g:lvdb_silent
+            echo 'Python debug is turned on'
+        endif
 
     elseif g:lvdb_debug_mode == 1
 
@@ -43,7 +68,9 @@ function! lvdb#Python_debug()
         set updatetime=4000     "back to default time
 
         " tell the user it has stopped
-        echo 'Python debug is turned off'
+        if !g:lvdb_silent
+            echo 'Python debug is turned off'
+        endif
 
         " from
         " http://vim.1045645.n5.nabble.com/tabdo-get-back-to-original-tab-td5729351.html
