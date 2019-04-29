@@ -45,7 +45,6 @@ def __lldb_init_module(debugger, internal_dict):
         return debugger.HandleCommand(
             'command script add -f lvdb_lldb_helper.' + func + ' ' + alias)
 
-    print('hello world')
     cmd_str('step_cmd', 's')
     cmd_str('next_cmd', 'n')
     cmd_str('jump_cmd', 'j')
