@@ -33,6 +33,17 @@ class Lvdb(TerminalPdb, object):
                 self.fname = fname
                 self.line = line
 
+    def do_jump(self, line_number):
+        with open(self.f_loc, "w") as f:
+            f.write(self.fname + ':' + str(line_number))
+        return super(Lvdb, self).do_jump(line_number)
+
+    def do_where(self, arg):
+        line_number = int(arg) if arg else self.line
+        with open(self.f_loc, "w") as f:
+            f.write(self.fname + ':' + str(line_number))
+        return super(Lvdb, self).do_where(arg)
+
     def interaction(self, frame, traceback):
         self._write_frame(frame)
         super(Lvdb, self).interaction(frame, traceback)

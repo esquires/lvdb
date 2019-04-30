@@ -38,6 +38,8 @@ jump_cmd = command_generator("jump")
 finish_cmd = command_generator("finish")
 continue_cmd = command_generator("continue")
 run_cmd = command_generator("run")
+up_cmd = command_generator("up")
+down_cmd = command_generator("down")
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -51,3 +53,4 @@ def __lldb_init_module(debugger, internal_dict):
     cmd_str('finish_cmd', 'fin')
     cmd_str('continue_cmd', 'c')
     cmd_str('run_cmd', 'r')
+    cmd_str('run_cmd', 'u')
