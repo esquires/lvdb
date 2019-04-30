@@ -36,6 +36,7 @@ class Lvdb(TerminalPdb, object):
     def do_jump(self, line_number):
         with open(self.f_loc, "w") as f:
             f.write(self.fname + ':' + str(line_number))
+        self.line = line_number
         return super(Lvdb, self).do_jump(line_number)
 
     def do_where(self, arg):
@@ -59,6 +60,8 @@ class Lvdb(TerminalPdb, object):
         self._write_frame(self.curframe)
 
     do_d = do_down = decorate_fn_with_doc(new_do_down, TerminalPdb.do_down)
+    do_j = do_jump
+    do_w = do_where
 
 
 def set_trace(frame=None):
