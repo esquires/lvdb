@@ -142,23 +142,12 @@ function! lvdb#process_location_file()
             continue
         endif
 
-        if g:lvdb_close_tabs == 1
-            let prev_tabpagenr = tabpagenr()
-        endif 
-
         let switchtabs = len(&switchbuf) - len(substitute(&switchbuf, 'tab', '', '')) > 0
         if switchtabs
             let found = tags#Look_for_matching_tab(fname)
             if found == 0
                 exec "tabnew " . fname
-                if g:lvdb_close_tabs == 1
-                    let g:lvdb_opened_tabs[fname] = ''
-                endif 
             endif
-            if g:lvdb_close_tabs == 1 && has_key(g:lvdb_opened_tabs, curr_fname)
-                call execute('tabclose ' . prev_tabpagenr)
-                unlet g:lvdb_opened_tabs[curr_fname]
-            endif 
         else
             exec "edit ". fname
         endif
