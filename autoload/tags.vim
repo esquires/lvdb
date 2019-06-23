@@ -3,12 +3,7 @@ function! tags#Look_for_matching_tab(fname)
 " loops through the tabs, if there is a matching filename, then it will select
 " that line number and return 1. otherwise it will do nothing and return 0.
 
-    if getftype(a:fname) == "link"
-        let search_for = resolve(a:fname)
-        echom 'updating from ' . a:fname ' to ' . search_for
-    else 
-        let search_for = a:fname
-    endif
+    let search_for = resolve(a:fname)
 
     "check current tab
     if tags#Look_for_matching_win(search_for)
@@ -37,7 +32,7 @@ function! tags#Look_for_matching_tab(fname)
 endfunction
 
 function! tags#Look_for_matching_win(search_for)
-    if a:search_for ==# expand('%:p')
+    if a:search_for ==# resolve(expand('%:p'))
         return 1
     endif
 
