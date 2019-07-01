@@ -6,7 +6,7 @@ from IPython.terminal.debugger import TerminalPdb
 import ipdb
 
 
-class Lvdb(TerminalPdb, object):
+class Lvdb(ipdb.__main__.debugger_cls, object):
     """extends IPython Pdb by outputting 2 files on the interaction event.
 
     .debug_location: filename:line_num
