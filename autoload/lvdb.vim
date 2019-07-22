@@ -144,9 +144,13 @@ function! lvdb#process_location_file()
 
         let switchtabs = len(&switchbuf) - len(substitute(&switchbuf, 'tab', '', '')) > 0
         if switchtabs
-            let found = tags#Look_for_matching_tab(fname)
+            let found = tags#Look_for_matching_tab(fname, 1)
             if found == 0
-                exec "tabnew " . fname
+                if filereadable(fname)
+                    exec "tabnew " . fname
+                else
+                    let found = tags#Look_for_matching_tab(fname, 0)
+                endif
             endif
         else
             exec "edit ". fname
