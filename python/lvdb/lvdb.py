@@ -50,13 +50,19 @@ class Lvdb(ipdb.__main__.debugger_cls, object):
         super(Lvdb, self).interaction(frame, traceback)
 
     def new_do_up(self, arg):
-        super(Lvdb, self).new_do_up(arg)
+        try:
+            super(Lvdb, self).new_do_up(arg)
+        except AttributeError:
+            super(Lvdb, self).do_up(arg)
         self._write_frame(self.curframe)
 
     do_u = do_up = decorate_fn_with_doc(new_do_up, TerminalPdb.do_up)
 
     def new_do_down(self, arg):
-        super(Lvdb, self).new_do_down(arg)
+        try:
+            super(Lvdb, self).new_do_down(arg)
+        except AttributeError:
+            super(Lvdb, self).do_down(arg)
         self._write_frame(self.curframe)
 
     do_d = do_down = decorate_fn_with_doc(new_do_down, TerminalPdb.do_down)

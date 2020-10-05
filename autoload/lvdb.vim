@@ -18,6 +18,10 @@ function! lvdb#Python_debug()
         let g:lvdb_toggle_always_all = 3
     endif
 
+    if !exists("g:lvdb_prefix_swap")
+        let g:lvdb_prefix_swap = []
+    endif
+
     if !exists("g:lvdb_gdb_output_file")
         let g:lvdb_gdb_output_file = '/tmp/lvdb.txt'
     endif
@@ -117,14 +121,28 @@ function! lvdb#process_location_file()
     let idx = -1
     while -idx <= len_lines
 
-        let data = split(lines[idx], ':')
+        let ln = lines[idx]
         let idx -= 1
+        let data = split(ln, ':')
 
         if len(data) < 2
-            continue
+            let data = split(ln, ' ')
+
+            if len(data) != 2
+                let data = split(ln, ' ')
+                continue
+            endif
+
+            let fname = data[1]
+            let line = trim(trim(data[0], 'in'))
+        else
+            let fname = trim(data[0])
+            let line = data[1]
+            if fname[:2] == 'at '
+                let fname = trim(fname[2:])
+            endif
         endif 
 
-        let fname = data[0]
         if fname[0] == ''
             " gdb sometimes puts  at the beginning of the filename
             let fname = fname[2:]
@@ -134,7 +152,9 @@ function! lvdb#process_location_file()
             continue
         endif 
 
-        let line = data[1]
+        if len(g:lvdb_prefix_swap) == 2
+            let fname = substitute(fname, g:lvdb_prefix_swap[0], g:lvdb_prefix_swap[1], '')
+        endif
 
         let curr_fname = expand('%:p')
         let curr_line = line(".")
@@ -150,6 +170,15 @@ function! lvdb#process_location_file()
                     exec "tabnew " . fname
                 else
                     let found = tags#Look_for_matching_tab(fname, 0)
+                    if found == 0
+                        echom 'cant open ' . fname
+
+                        " set the cursonline anyway so the user can manually
+                        " open the file if desired
+                        exec line
+                        set cursorline
+                        continue
+                    endif
                 endif
             endif
         else
