@@ -26,5 +26,5 @@ setup(name='lvdb',
           'Topic :: Text Editors'
           ],
       keywords='vim gdb pdb ipdb',
-      install_requires=['ipdb==0.13.4'],
+      install_requires=['ipdb'],
       packages=['lvdb'])
